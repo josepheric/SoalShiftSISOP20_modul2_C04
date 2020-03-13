@@ -4,10 +4,15 @@
 # Penjelasan No 1
 
 a. Program menerima 4 argumen berupa:
+
 i. Detik: 0-59 atau * (any value)
+
 ii. Menit: 0-59 atau * (any value)
+
 iii. Jam: 0-23 atau * (any value)
+
 iv. Path file .sh
+
 b. Program akan mengeluarkan pesan error jika argumen yang diberikan tidak
 sesuai
 
@@ -99,7 +104,8 @@ while (1)
 ```
 
 
-# Penjelasan No 3A.
+# Penjelasan No 3
+No3A:
 ```
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -173,7 +179,7 @@ while(1) {
 }
 ```
 Open untuk membuat directory dan file tersebut
-B.
+3B.
 ```
 FILE *destination;
 	char path[PATH_MAX];
