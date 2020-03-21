@@ -2,59 +2,29 @@
 
 
 # Penjelasan No 1
+Pertama-tama saya mengecek apakah input argumen yang diminta sesuai dengan permintaan soal, pada hal ini input detik, menit, jam, sesuai dengan format, dan parameter ke 4 yaitu direktori bash script dapat ditemukan. 
 
-a. Program menerima 4 argumen berupa:
-
-i. Detik: 0-59 atau * (any value)
-
-ii. Menit: 0-59 atau * (any value)
-
-iii. Jam: 0-23 atau * (any value)
-
-iv. Path file .sh
-
-b. Program akan mengeluarkan pesan error jika argumen yang diberikan tidak
-sesuai
-
-Program C untuk 1a dan 1b:
+Berikut adalah kodenya:
 ```
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <unistd.h>
-#include <syslog.h>
-#include <string.h>
-#include <time.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <wait.h>
-
-
-int main(int argc, char	**argv) {
-	int i, flag=1;
+int i, flag=1;
 	for (i=0; argv[1][i]!='\0'; i++)
 	{
 	if (isdigit(argv[1][i]) == 0 && strcmp(argv[1],"*") != 0)
 	flag=0;
 	}
-
 	for (i=0; argv[2][i]!='\0'; i++)
 	{
-	// check for decimal digits
 	if (isdigit(argv[2][i]) == 0 && strcmp(argv[2],"*") != 0)
 	flag=0;
 	}
 	for (i=0; argv[3][i]!='\0'; i++)
 	{
-	// check for decimal digits
 	if (isdigit(argv[3][i]) == 0 && strcmp(argv[3],"*") != 0)
 	flag=0;
 	}
 
-	if (atoi(argv[1]) >=60 || atoi(argv[2]) >= 60 || atoi(argv[3]) >= 60 && flag==1)
+	if (atoi(argv[1]) >=60 || atoi(argv[1]) <0 || atoi(argv[2]) >= 60 ||atoi(argv[2]) < 0
+	|| atoi(argv[3]) >= 60 || atoi(argv[3]) < 0 && flag==1)
 	flag=0;
 
 	if(flag==0)
@@ -69,39 +39,178 @@ int main(int argc, char	**argv) {
     exit(EXIT_FAILURE);
   }
 
-pid_t pid, sid;
-pid = fork();
-if (pid < 0) {
-exit(EXIT_FAILURE);
-}
-if (pid > 0) {
-exit(EXIT_SUCCESS);
-}
+```
 
-umask(0);
-
-sid = setsid();
-if (sid < 0) {
-exit(EXIT_FAILURE);
-}
-
-if ((chdir("/")) < 0) {
-exit(EXIT_FAILURE);
-}
-
-
-close(STDIN_FILENO);
-close(STDOUT_FILENO);
-close(STDERR_FILENO);
-
-while (1)
-{
-//masih belum paham cara buat program yang seperti crontabnya
-}
-
-}
+Kemudian saya membuat program daemon, yang isinya sebagai berikut:
+Pertama-tama saya mengecek apakah input detik,menit,jam merupakan bintang atau tidak.
+Kemudian saya mengconvert detik menit jam ke integer menggunakan atoi
 
 ```
+int detikitubintang,menititubintang,jamitubintang;
+
+	if (strcmp (argv [1], "*") == 0)
+	detikitubintang =1;
+
+	if (strcmp (argv [2], "*") == 0)
+	menititubintang =1;
+
+	if (strcmp (argv [3], "*") == 0)
+	jamitubintang =1;
+
+	int detik = atoi (argv[1]);
+	int menit = atoi (argv [2]);
+	int jam = atoi (argv [3]);
+```
+
+Terakhir apabila detik,menit,jam sekarang (pada pc) sesuai dengan inputan user ATAU detik, menit,jam merupakan bintang,
+maka script dijalankan
+```
+time_t waktu;
+	struct tm *timenow;
+	time( &waktu );
+	timenow = localtime( &waktu );
+
+
+
+	int detikbenar,menitbenar,jambenar;
+	if (detik == timenow->tm_sec || detikitubintang ==1 )
+	detikbenar =1;
+	if ( menit == timenow->tm_min || menititubintang == 1)
+	menitbenar = 1;
+	if (jam == timenow->tm_hour || jamitubintang ==1)
+	jambenar =1;
+
+	if (detikbenar ==1 && jambenar ==1 && menitbenar ==1)
+	{
+		pid_t id_child;
+		id_child = fork();
+
+		if (id_child== 0) {
+		char *pathsh[] = {"bash", argv[4], NULL};
+		execv("/bin/bash", pathsh);
+							}
+		else if (id_child <0)
+		exit(EXIT_FAILURE);
+
+	}
+
+	sleep(1);
+
+}
+```
+Berikut saat program menjalankan isprime.sh yang isinya 
+#!/bin/bash
+date >> ~/date.txt
+
+![Screenshot from 2020-03-21 22-46-31](https://user-images.githubusercontent.com/61129358/77230328-fddbef00-6bc5-11ea-99c3-845f6439fb48.png)
+
+Beriku isi date.txt:
+
+
+![Screenshot from 2020-03-21 22-49-25](https://user-images.githubusercontent.com/61129358/77230402-7fcc1800-6bc6-11ea-999a-55b5bc7997e0.png)
+
+
+
+
+# Penjelasan No 2:
+Untuk no 2 saya hanya dapat:
+a. Membuat folder yang namanya berupa timestamp:
+```
+ int status,status1,status2,status3;
+
+
+    time_t t ;
+    struct tm *tmp ;
+    char MY_TIME[Size];
+    time( &t );
+    tmp = localtime( &t );
+      // using strftime to display time
+    strftime(MY_TIME, sizeof(MY_TIME), "%Y-%m-%d_%H:%M:%S", tmp);
+
+    //strcat supaya membuat direktori dengan timestamp
+    char namafolder [] = "/home/eric/";
+    strcat (namafolder,MY_TIME);
+
+    pid_t id_child;
+    id_child = fork();
+
+    if (id_child <0)
+    exit (EXIT_FAILURE);
+
+    if (id_child == 0)
+    {
+
+      char *mkdir[] = {"mkdir", "-p", namafolder, NULL};
+      execv("/bin/mkdir", mkdir);
+    }
+ ```
+ b. Mendownload Gambar ke folder tersebut sebanyak 20 kali dengan cara membuat child process baru dengan fork ()
+ ```
+
+   while ((wait(&status)) > 0);
+    pid_t id_child2 = fork ();
+
+    if (id_child2 <0)
+    exit (EXIT_FAILURE);
+
+
+    if (id_child2 == 0)
+    {
+
+    chdir (namafolder);
+    char namafolder1 [1000];
+    strcpy (namafolder,namafolder1);
+    int i;
+    for (i=1;i<=20;i++)
+      {
+        // Ini semua cuma buat cari EPOCH linux time
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        int num = tv.tv_sec;
+        num = (num %1000) +100; //download size disoal
+        int length = snprintf( NULL, 0, "%d", num );
+        char* str = malloc( length + 1 );
+        snprintf( str, length + 1, "%d", num );
+        //Epoch time ada didalam str
+
+        //Membuat URL DOnwload
+        char urldownload [] = "https://picsum.photos/";
+        strcat (urldownload, str);
+
+        //Membuat nama file yg didownload
+        time_t t ;
+        struct tm *tmp ;
+        char namafile[Size];
+        time( &t );
+        tmp = localtime( &t );
+        // using strftime to display time
+        strftime(namafile, sizeof(namafile), "%Y-%m-%d_%H:%M:%S", tmp);
+
+
+        //wget - P namafolder urldownload
+        pid_t id_child3;
+        id_child3 = fork ();
+        if (id_child3 <0)
+        exit (EXIT_FAILURE);
+
+        if (id_child3 == 0)
+        {
+        char *wget[] = {"wget",urldownload,"-O",namafile, NULL};
+		    execv("/usr/bin/wget",wget);
+        }
+```
+Gambar yang didownload akan memeiliki naam file berupa timestamp, dan memiliki ukuran file pesergi sebesar (epoch linux time % 1000) + 100 pixel. Gamabr akan didownload tiap 5 detik. Folder akan dibuat tiap 30 detik
+Berikut adalah hasil menjalankan program diatas:
+
+![Screenshot from 2020-03-21 22-57-18](https://user-images.githubusercontent.com/61129358/77230553-9757d080-6bc7-11ea-9606-393056cd52db.png)
+
+
+![Screenshot from 2020-03-21 22-57-18](https://user-images.githubusercontent.com/61129358/77230536-7ee7b600-6bc7-11ea-9db2-d27686e1da15.png)
+
+![Screenshot from 2020-03-21 22-57-52](https://user-images.githubusercontent.com/61129358/77230582-d0904080-6bc7-11ea-9c4b-aa92b9b2b443.png)
+
+
+
 
 
 # Penjelasan No 3
